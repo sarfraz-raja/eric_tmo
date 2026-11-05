@@ -14,9 +14,19 @@ import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Project root ki .env file se KEY=VALUE load karo (Apache/mod_wsgi shell env nahi padhta)
+_env_file = BASE_DIR / '.env'
+if _env_file.exists():
+    for _line in _env_file.read_text().splitlines():
+        _line = _line.strip()
+        if _line and not _line.startswith('#') and '=' in _line:
+            _key, _val = _line.split('=', 1)
+            os.environ.setdefault(_key.strip(), _val.strip().strip('"\''))
+
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'MAIL{AJAY.OJHA1@MCPSINC.COM}yh+-7=+4fdTS-1f+454465wxtyid0^a3^qye$#d8h9jmq&$8l#$QEN}{[]%mdzm1044b2')
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('1', 'true', 'yes')
-ALLOWED_HOSTS = ['172.191.168.237', 'localhost', '127.0.0.1', 'mscripter.mpulsenet.com',  'mpulsenet.com', 'mscriptdev.mpulsenet.com']
+ALLOWED_HOSTS = ['172.191.168.237', 'localhost', '127.0.0.1', 'mscripter.mpulsenet.com',  'mpulsenet.com', 'mscriptdev.mpulsenet.com', 'structsense.mpulsenet.com']
 ALLOWED_HOSTS += [h.strip() for h in os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',') if h.strip()]
 
 INSTALLED_APPS = [
