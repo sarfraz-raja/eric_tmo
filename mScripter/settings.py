@@ -29,6 +29,14 @@ DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('1', 'true', 'yes')
 ALLOWED_HOSTS = ['172.191.168.237', 'localhost', '127.0.0.1', 'mscripter.mpulsenet.com',  'mpulsenet.com', 'mscriptdev.mpulsenet.com', 'structsense.mpulsenet.com']
 ALLOWED_HOSTS += [h.strip() for h in os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',') if h.strip()]
 
+# SSL (certbot) lagne ke baad .env me DJANGO_HTTPS=True karo
+if os.environ.get('DJANGO_HTTPS', 'False').lower() in ('1', 'true', 'yes'):
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    CSRF_TRUSTED_ORIGINS = [F'https://{h}' for h in ALLOWED_HOSTS if '.' in h and not h[0].isdigit()]
+    SECURE_HSTS_SECONDS = int(os.environ.get('DJANGO_HSTS_SECONDS', '0'))
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
