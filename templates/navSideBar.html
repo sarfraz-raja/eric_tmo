@@ -1,0 +1,80 @@
+{% load user_tags %}
+{% block content %}
+<div id="wrapper" style="width: 100%;">
+    <ul class="navbar-nav  sidebar sidebar-dark accordion" style="background-color: #143b64;" id="accordionSidebar">
+    <hr class="sidebar-divider my-0">
+    <!-- Nav Item - Dashboard -->
+</ul>
+<div id="layoutSidenav_nav">
+    <nav class="sb-sidenav accordion sb-sidenav-dark" style="background-color: #143b64;" id="sidenavAccordion">
+        <div class="sb-sidenav-menu">
+            <div class="nav">
+                <div id="wrapper" >
+                    <ul class="navbar-nav  sidebar sidebar-dark accordion" style="background-color: #143b64;" id="accordionSidebar">
+
+                        {% if request|has_group:"tmobile" or request.user.is_superuser %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="/T-Mobile/script">
+                                <i class="fa fa-plus"></i>&nbsp;
+                                <span style="font-size: 13px;">T-Mobile LTE/NR Script</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/T-Mobile/sitelist">
+                                <i class="fa fa-list-alt"></i>&nbsp;
+                                <span style="font-size: 13px;">T-Mobile List</span>
+                            </a>
+                        </li>
+                        {% endif %}
+
+                        {% if request|has_group:"vz" or request.user.is_superuser %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="/VZ/script">
+                                <i class="fa fa-plus"></i>&nbsp;
+                                <span style="font-size: 13px;">VZ LTE/NR Script</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/VZ/sitelist">
+                                <i class="fa fa-list-alt"></i>&nbsp;
+                                <span style="font-size: 13px;">VZ List</span>
+                            </a>
+                        </li>
+                        {% endif %}
+
+                        {% if request.user.is_superuser %}
+                            <li class="nav-item">
+                                <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapsePages"
+                                    aria-expanded="false" aria-controls="collapsePages">
+                                    <div class="sb-nav-link-icon"><i class="fa fa-user"
+                                            style="font-size:15px;color:rgb(255, 255, 255);"></i></div><span style="font-size: 13px;">Admin</span>
+                                    <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                                </a>
+                            </li>
+                            <div class="collapse" id="collapsePages" aria-labelledby="headingTwo" data-parent="#sidenavAccordion">
+                                <nav class="sb-sidenav-menu-nested nav accordion" id="sidenavAccordionPages">
+                                    <a class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#pagesCollapseAuth"
+                                        aria-expanded="false" aria-controls="pagesCollapseAuth"><span style="font-size: 13px;">DB Update</span>
+                                        <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                                    </a>
+                                    <div class="collapse" id="pagesCollapseAuth" aria-labelledby="headingOne"
+                                        data-parent="#sidenavAccordionPages">
+                                        <nav class="sb-sidenav-menu-nested nav">
+                                            <a class="nav-link" href="{% url 'dbupdate'%}"><span style="font-size: 13px;">Update</span></a>
+                                            <a class="nav-link" href="{% url 'dbupdatelist'%}"><span style="font-size: 13px;">Report</span></a>
+                                        </nav>
+                                    </div>
+                                </nav>
+                            </div>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+</div>
+<style>
+    #circle {border-radius: 30% 40% 40% 40%; width: 40px; height: 40px;}
+    .sb-sidenav .sb-sidenav-menu .nav .nav-link {display: flex; align-items: center; padding-top: 0.75rem; padding-bottom: 0.75rem; position: relative; color: #f1f0ee; font-size: 16px;}
+</style>
+{% endblock %}

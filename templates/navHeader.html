@@ -1,0 +1,37 @@
+{% load user_tags %}
+{% block content %}
+<div id="content-wrapper" class="d-flex flex-column">
+    <div id="content">
+        <nav class="sb-topnav navbar navbar-expand navbar-light topbar mb-4 static-top shadow"
+            style="background-color: #143b64;">
+            <img src="/static/img/logo3.png" style="width: 70px;align-self: center; margin: 25px;" />
+            <button id="sidebarToggleTop" id="sidebarToggle" class="btn btn-link d-md-none rounded-circle mr-3">
+                <i class="fa fa-bars"></i>
+            </button>
+            <button class="btn btn btn-sm order-1 order-lg-0" id="sidebarToggle"
+                style="margin-left: 55px; background-color: transparent; border: 0px solid transparent;color: white;" href="#">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h5 class="headerhead ">{{ request.path|headerheadurl }}</h5>
+            <h1 style="padding-left: 10px;font-size:1.50rem;" class="h3 mb-0 text-white"></h1>
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item dropdown no-arrow">
+                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown"
+                        aria-haspopup="true" aria-expanded="false">
+                        <span class="mr-2 d-none d-lg-inline text-white small">
+                            <span class="user-loging">&nbsp;<i class="fa fa-user"></i>&nbsp;&nbsp;&nbsp;Hello {{request.user.first_name}}</span>
+                        </span>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
+                        aria-labelledby="userDropdown">
+                        <a class="dropdown-item" href="/logout">
+                            <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-black"></i>
+                            <span style="color: black;">Logout</span>
+                        </a>
+                    </div>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+{% endblock %}

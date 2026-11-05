@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block content %}
+{% load static %}
+<body class="sb-nav-fixed" style="background-color: #eff7fe;">
+    {% include "navHeader.html" %}
+    <div id="layoutSidenav">
+        {% include "navSideBar.html" %}
+        <div id="layoutSidenav_content">
+            <main>
+                <div class="container-fluid">
+                    <div class="container-fluid">
+                        <div class="row justify-content-center">
+                            <div class="col-lg-12">
+                                <div class="card shadow-lg border-0 rounded-lg mt-5">
+                                    
+                                    <div class="card-body">
+                                        {% for message in messages %}
+                                        <p style="color:green">{{message}}</p>
+                                        {% endfor %}
+                                        <form action="" method="POST" enctype="multipart/form-data"
+                                            class="was-validated">
+                                            {% csrf_token %}
+                                            <!-- First Section -->
+                                            <div class="form-group row">
+                                                <div class="form-group col-md-6 row">
+                                                    <label class="col-md-4" for="version">DB Type</label>
+                                                    <select class="col-md-8 custom-select" name="appname" id="appname" required>
+                                                        <option value="" selected>Please Select DB Type...</option>
+                                                        {% for item in appname %}
+                                                            <option value="{{item}}">{{item}}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                                <div class="form-group col-md-6 row">
+                                                    <label class="col-md-4" for="dbupdate_file">Upload File...</label>
+                                                    <div class="col-md-8 custom-file">
+                                                        <input type="file" class="custom-file-input" id="dbupdate_file" name="dbupdate_file" required accept=".xlsx">
+                                                        <label class="custom-file-label" for="validatedCustomFile" id="dbupdate_file">Upload xlsx DB file...</label>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-md-6 row">
+                                                    <label class="col-md-4" for="remark">Remark</label>
+                                                    <input type="text" class="col-md-8 form-control" id="remark" name="remark" placeholder="Details..." required>
+                                                </div>
+											</div>
+											<div class="form-row centerbtn">
+                                                <button type="submit" class="btn btn-primary">Submit</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                    <div class="card-footer text-center">
+                                        <div class="small footer-text"><a class="footer-text" href="/dbupdatelist">DB Update List</a></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <script>var customer1={{customer1|safe}};</script>
+{% endblock %}
+

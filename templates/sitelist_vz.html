@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% load static %}
+   {% block content %}
+    <body class="sb-nav-fixed" style="background-color: #eff7fe;">
+        {% include "navHeader.html" %}
+        <div id="layoutSidenav">
+            {% include "navSideBar.html" %}
+            <div id="layoutSidenav_content">
+                <main>
+                    <div class="container-fluid">
+                        {% for message in messages %}
+                        <p style="color:green"> {{message}} </p>
+                        {% endfor %}
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0" >
+                                        <thead>
+                                            <tr >
+                                                <th>ID</th>
+                                                <th>Customer</th>
+                                                <th>Market</th>
+                                                <th>SW Relese</th>
+                                                <th>Node ID</th>
+                                                <th>CreatedBy</th>
+                                                <th>Time of Creation</th>
+                                                <th>Status</th>
+                                                <th>Script</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for job in jobs %}
+                                            <tr>
+                                                <td>{{forloop.counter}}</td>
+                                                <td>{{job.client.market}}</td>
+                                                <td>{{job.client.usm}}</td>
+                                                <td>{{job.client.sw}}</td>
+                                                <td>{{job.site}}</td>
+                                                <td>{{job.user.username}}</td>
+                                                <td>{{job.create_dt|date:'m-d-Y H:i:s'}}</td>
+                                                <td>{{job.status}}</td>
+                                                <td>
+                                                    {% if job.status == 'Completed' %}
+                                                    <a href="/media/vz/{{job.script}}">Script<i class="fa fa-download" style="font-size:24px;
+                                                    color:green"></i></a>
+                                                    {% elif job.status == 'Running' or job.status == 'Queued' %}
+                                                    <div class="fa-2x">  <i class="fas fa-spinner fa-spin " style="font-size:24px;color:orange"></i></div>
+                                                    {% else %}
+                                                    <a href="/media/vz/{{job.script}}">Log <i class="fa fa-download" style="font-size:24px;color:red"></i></a>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                            {%endfor%}
+                                        </tbody>
+                                    </table>   
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+        <meta http-equiv="refresh" content="500" />
+{% endblock %}

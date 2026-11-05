@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block content %}
+{% load static %}
+<body class="sb-nav-fixed" style="background-color: #eff7fe;">
+    {% include "navHeader.html" %}
+    <div id="layoutSidenav">
+        {% include "navSideBar.html" %}
+        <div id="layoutSidenav_content">
+            <main>
+                <div class="container-fluid">
+                    <div class="container">
+                        <div class="row justify-content-center">
+                            <div class="col-md-12">
+                                <div class="card shadow-lg border-0 rounded-lg mt-5">
+                                    <div class="card-body">
+                                        {% for message in messages %}
+                                        <p style="color:green">{{message}}</p>
+                                        {% endfor %}
+                                        <form action="" method="POST" enctype="multipart/form-data" class="was-validated">
+                                            {% csrf_token %}
+                                            <!-- First Section -->
+                                            <div class="form-group row">
+                                                <div class="form-group col-md-6 row">
+                                                    <label for="swrel" class="col-md-4" >Software Relese</label>
+                                                    <select class="custom-select col-md-8" name="swrel" id="sw_nameSel" required
+                                                        onchange="updateMarketNameOptions(value,'market_nameSel'); disableGrandChild('enm_nameSel');"></select>
+                                                </div>
+                                                <div class="form-group col-md-6 row">
+                                                    <label for="mname" class="col-md-4">SubNetwork</label>
+                                                    <select class="custom-select col-md-8" name="mname" id="market_nameSel" required disabled="disabled"
+                                                        onchange="updateEnmRelOptions(value,'enm_nameSel');"></select>
+                                                </div>
+
+                                                <div class="form-group col-md-6 row">
+                                                    <label for="sw_enm" class="col-md-4" >ENM</label>
+                                                    <select class="custom-select col-md-8" name="sw_enm" id="enm_nameSel" required disabled="disabled"></select>
+                                                </div>
+											   <div class="form-group col-md-6 row">
+                                                    <label for="siteid" class="col-md-4">Site ID</label>
+                                                    <input type="text" class="form-control col-md-8" id="siteid" name="siteid" placeholder="Enter Node Id.." required>
+                                                </div>
+                                               <div class="form-group col-md-6 row">
+                                                    <label for="ciqfile" class="col-md-4">CIQ File</label>
+                                                    <div class="custom-file col-md-8">
+                                                        <input type="file" class="custom-file-input" id="ciqfile" name="ciqfile" required accept=".xlsx">
+                                                        <label class="custom-file-label" for="validatedCustomFile" id="ciqfile_ID">Choose CIQ file (*.xlxs)...</label>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-md-6 row">
+                                                    <label for="software_log" class="col-md-4">DCGK Files</label>
+                                                    <div class="custom-file col-md-8">
+                                                        <input type="file" class="custom-file-input" id="software_log" name="software_log" accept=".zip">
+                                                        <label class="custom-file-label" for="validatedCustomFile" id="software_log">Choose Log file (*.zip)...</label>
+                                                    </div>
+                                                </div>
+											</div>
+											<div class="form-row centerbtn">
+                                                <button type="submit" class="btn btn-primary">Create Script</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                    <div class="card-footer text-center">
+                                        <div class="small footer-text"><a class="footer-text" href="/T-Mobile/sitelist">Script List</a></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <script>var customer1={{ customer1|safe}};</script>
+{% endblock %}
+

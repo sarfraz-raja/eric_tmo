@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Create Script Flow (EN)</title>
+<style>
+  :root { --bg:#f6f8fb; --card:#fff; --ink:#172b45; --muted:#5b6b80; --line:#d8e0ea; --navy:#15385f; --blue:#e7f0fb; --green:#e5f5ec; --amber:#fdf2dc; --purple:#efeafb; --code:#eef2f7; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.55 "Segoe UI",system-ui,sans-serif; }
+  main { max-width:980px; margin:auto; padding:24px 16px 60px; }
+  h1 { font-size:26px; margin:0 0 4px; color:var(--navy); }
+  h2 { font-size:19px; margin:34px 0 10px; color:var(--navy); }
+  p { margin:6px 0 10px; }
+  .sub { color:var(--muted); margin-bottom:16px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px 16px; margin:10px 0; }
+  .note { background:var(--amber); border:1px solid #efd9a8; border-radius:10px; padding:10px 14px; margin:10px 0; }
+  code { background:var(--code); border-radius:4px; padding:1px 5px; font:12.5px Consolas,monospace; overflow-wrap:anywhere; }
+  svg { display:block; width:100%; height:auto; }
+  svg text { font-family:"Segoe UI",system-ui,sans-serif; fill:#172b45; }
+  .scroll { overflow-x:auto; }
+  table { border-collapse:collapse; width:100%; min-width:620px; background:var(--card); font-size:14px; }
+  th,td { border:1px solid var(--line); padding:7px 9px; text-align:left; vertical-align:top; }
+  th { background:var(--navy); color:#fff; font-weight:600; }
+  pre { background:#14263d; color:#e6edf6; border-radius:10px; padding:14px; overflow-x:auto; font:13px/1.6 Consolas,monospace; margin:10px 0; }
+  pre .c { color:#8fb7dd; }
+</style>
+</head>
+<body>
+<main>
+<h1>Create Script: backend flow</h1>
+<p class="sub">From the button click to the finished zip, and which file is generated under which condition. Example run: <code>IE04692B_20261030005723</code></p>
+
+<div class="note"><b>Note first:</b> the log in this folder shows Riverside / PON05CNM / TMO_26_Q2_EC2, while the screenshot has Albuquerque / PON03CNM / TMO_25_Q3_EC2 selected. The examples in this document come from the Riverside run. Changing the market or release can change which files are generated and what they contain.</div>
+
+<h2>1. Which API is it?</h2>
+<div class="card">
+  <p>Just one endpoint: <code>POST /T-Mobile/script/</code>. It is not a JSON API but a regular Django form submit. A <code>GET</code> on the same URL renders the form.</p>
+  <p>Route: <code>mScripter/urls.py:10</code> → <code>tmobile/urls.py:6</code> → <code>script_tmobile()</code> in <code>tmobile/views.py:23</code></p>
+  <p>Form fields: <code>swrel</code>, <code>mname</code>, <code>sw_enm</code>, <code>siteid</code>, <code>ciqfile</code>, <code>software_log</code> (DCGK zip)</p>
+</div>
+
+<h2>2. End-to-end flow</h2>
+<div class="card">
+<svg viewBox="0 0 900 900" role="img" aria-label="7 steps from Create Script to zip download">
+  <defs><marker id="a" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0 0 L9 4.5 L0 9 z" fill="#15385f"/></marker></defs>
+  <g font-size="14">
+    <!-- steps -->
+    <g stroke="#9db4cc" stroke-width="1.2">
+      <rect x="20" y="10" width="560" height="84" rx="9" fill="#e7f0fb"/>
+      <rect x="20" y="124" width="560" height="84" rx="9" fill="#e7f0fb"/>
+      <rect x="20" y="238" width="560" height="104" rx="9" fill="#e5f5ec"/>
+      <rect x="20" y="372" width="560" height="104" rx="9" fill="#e5f5ec"/>
+      <rect x="20" y="506" width="560" height="104" rx="9" fill="#efeafb"/>
+      <rect x="20" y="640" width="560" height="104" rx="9" fill="#efeafb"/>
+      <rect x="20" y="774" width="560" height="104" rx="9" fill="#fdf2dc"/>
+    </g>
+    <g stroke="#15385f" stroke-width="2" marker-end="url(#a)">
+      <line x1="300" y1="94" x2="300" y2="122"/><line x1="300" y1="208" x2="300" y2="236"/>
+      <line x1="300" y1="342" x2="300" y2="370"/><line x1="300" y1="476" x2="300" y2="504"/>
+      <line x1="300" y1="610" x2="300" y2="638"/><line x1="300" y1="744" x2="300" y2="772"/>
+    </g>
+    <text x="36" y="36" font-weight="700">1. Request and job record</text>
+    <text x="36" y="58">Site ID cleaned, Client fetched from DB, ScriptJob created</text>
+    <text x="36" y="80" font-size="12.5" fill="#5b6b80">tmobile/views.py:24-34</text>
+
+    <text x="36" y="150" font-weight="700">2. Upload save</text>
+    <text x="36" y="172">Both files saved to media/tmobile/&lt;Site&gt;_&lt;time&gt;/</text>
+    <text x="36" y="194" font-size="12.5" fill="#5b6b80">views.py:36-37 → common_func/django_user_func.py:31</text>
+
+    <text x="36" y="264" font-weight="700">3. Job start</text>
+    <text x="36" y="286">Status = Running, log file created</text>
+    <text x="36" y="308">Runs inside the request itself, not in the background</text>
+    <text x="36" y="330" font-size="12.5" fill="#5b6b80">views.py:38 → tmobile/tmobile_jobs.py:11-26</text>
+
+    <text x="36" y="398" font-weight="700">4. Data load (about 57 sec in this run)</text>
+    <text x="36" y="420">CIQ + DCGK + DB are combined into node and cell data</text>
+    <text x="36" y="442">The 1_ to 5_ Excel reports are also generated here</text>
+    <text x="36" y="464" font-size="12.5" fill="#5b6b80">tmobile_jobs.py:29 → tmo_ix/tmo_usid_data.py:19-77</text>
+
+    <text x="36" y="532" font-weight="700">5. Double loop: every node × every module</text>
+    <text x="36" y="554">Class is loaded from the module list, then self.run()</text>
+    <text x="36" y="576">lte_ skipped on gNB-only nodes, nr_ skipped on eNB-only nodes</text>
+    <text x="36" y="598" font-size="12.5" fill="#5b6b80">tmobile_jobs.py:31-40, list: :57-81</text>
+
+    <text x="36" y="666" font-weight="700">6. Writing the script file</text>
+    <text x="36" y="688">Empty script_list = no file is written</text>
+    <text x="36" y="710">Text lines = .mos, XML document = .xml</text>
+    <text x="36" y="732" font-size="12.5" fill="#5b6b80">tmo_ix/tmo_xml_base.py:60-79</text>
+
+    <text x="36" y="800" font-weight="700">7. Zip and finish</text>
+    <text x="36" y="822">Status Completed/Failed, log copied, folder zipped, then deleted</text>
+    <text x="36" y="844">Redirect: /T-Mobile/sitelist/, download: /media/tmobile/&lt;zip&gt;</text>
+    <text x="36" y="866" font-size="12.5" fill="#5b6b80">tmobile_jobs.py:41-54, views.py:39</text>
+
+    <!-- inputs -->
+    <g stroke="#9db4cc" stroke-width="1.2" fill="#fff">
+      <rect x="640" y="340" width="245" height="68" rx="8"/>
+      <rect x="640" y="424" width="245" height="68" rx="8"/>
+      <rect x="640" y="508" width="245" height="84" rx="8"/>
+    </g>
+    <text x="654" y="366" font-weight="700">CIQ .xlsx (16 sheets)</text>
+    <text x="654" y="388" font-size="12.5">New plan: nodes, cells, IP, RF</text>
+    <text x="654" y="450" font-weight="700">DCGK.zip</text>
+    <text x="654" y="472" font-size="12.5">Current live configuration of the site</text>
+    <text x="654" y="534" font-weight="700">DB (SQLite)</text>
+    <text x="654" y="556" font-size="12.5">Client, Software, MME/AMF pool,</text>
+    <text x="654" y="575" font-size="12.5">Mo* baseline tables</text>
+    <g stroke="#15385f" stroke-width="1.6" fill="none" marker-end="url(#a)">
+      <path d="M640 374 H600 V410 H582"/>
+      <path d="M640 458 H600 V440 H582"/>
+      <path d="M640 550 H582"/>
+    </g>
+  </g>
+</svg>
+</div>
+
+<h2>3. What happens inside step 4</h2>
+<div class="scroll"><table>
+<tr><th>Task</th><th>Code</th><th>Output / meaning</th></tr>
+<tr><td>Read CIQ</td><td><code>tmo_ciq_data.py:25-36</code></td><td>One DataFrame per sheet. Column names cleaned and lowercased.</td></tr>
+<tr><td>Node list</td><td><code>tmo_ciq_data.py:39-40</code></td><td>eNodeB list from <code>eNB Info</code> and gNodeB list from <code>gNB Info</code>. <b>Not from the Site ID field.</b></td></tr>
+<tr><td>Unzip and parse DCGK</td><td><code>common_func/dcgkextract.py</code>, <code>dcgkparse.py</code></td><td>Per-node dictionary of all MOs and parameters.</td></tr>
+<tr><td>Node data</td><td><code>tmo_usid_data.py:83</code></td><td>IP/VLAN from CIQ, NTP/timezone/ENM from DB, SW package from <code>tmo_data.py</code>.</td></tr>
+<tr><td>BB change check</td><td><code>tmo_usid_data.py:221</code></td><td>DCGK BBType ≠ CIQ BBType, or no DCGK = <code>BBChange=True</code>.</td></tr>
+<tr><td>Cell status</td><td><code>tmo_usid_data.py:241</code>, <code>:340</code></td><td>CIQ and DCGK matched by cellId. Movement: <code>new / yes / no</code>. <code>addcell = BBChange or movement != no</code>.</td></tr>
+<tr><td>LTE relations</td><td><code>tmo_usid_data.py:519-1201</code></td><td>EUtra, GUtra, Utra, Gera network data.</td></tr>
+<tr><td>Antenna, XMU, RiLink</td><td><code>tmo_usid_data.py:1508-1722</code></td><td>Radio wiring. <code>fruchange</code> decides Radio Cutover.</td></tr>
+<tr><td>Reports</td><td><code>tmo_usid_data.py:1925</code></td><td>The 1_ to 5_ Excel files. A report is skipped when its data is empty.</td></tr>
+</table></div>
+
+<h2>4. Which parameters decide the files</h2>
+<div class="card">
+<svg viewBox="0 0 900 390" role="img" aria-label="Decision flow for choosing the file path">
+  <g font-size="14">
+    <g stroke="#9db4cc" stroke-width="1.2">
+      <rect x="20" y="20" width="250" height="66" rx="9" fill="#e7f0fb"/>
+      <rect x="325" y="20" width="250" height="66" rx="9" fill="#e7f0fb"/>
+      <rect x="630" y="20" width="250" height="66" rx="9" fill="#e7f0fb"/>
+      <rect x="20" y="150" width="250" height="84" rx="9" fill="#fdf2dc"/>
+      <rect x="325" y="150" width="250" height="84" rx="9" fill="#fdf2dc"/>
+      <rect x="630" y="150" width="250" height="84" rx="9" fill="#fdf2dc"/>
+      <rect x="20" y="294" width="250" height="76" rx="9" fill="#e5f5ec"/>
+      <rect x="325" y="294" width="250" height="76" rx="9" fill="#e5f5ec"/>
+      <rect x="630" y="294" width="250" height="76" rx="9" fill="#e5f5ec"/>
+    </g>
+    <g stroke="#15385f" stroke-width="2" fill="none" marker-end="url(#a)">
+      <line x1="270" y1="53" x2="323" y2="53"/><line x1="575" y1="53" x2="628" y2="53"/>
+      <path d="M755 86 V118 H145 V148"/><path d="M450 118 V148"/><path d="M755 118 V148"/>
+      <line x1="145" y1="234" x2="145" y2="292"/><line x1="450" y1="234" x2="450" y2="292"/><line x1="755" y1="234" x2="755" y2="292"/>
+    </g>
+    <text x="36" y="46" font-weight="700">Module runs</text><text x="36" y="68" font-size="12.5">object for node + module</text>
+    <text x="341" y="46" font-weight="700">Conditions check</text><text x="341" y="68" font-size="12.5">fail = return, script_list empty</text>
+    <text x="646" y="46" font-weight="700">Path is set</text><text x="646" y="68" font-size="12.5">relative_path + file type</text>
+    <text x="36" y="176" font-weight="700">BBChange = True?</text><text x="36" y="198" font-size="12.5">C01-C05 modules</text><text x="36" y="218" font-size="12.5">New node will be integrated</text>
+    <text x="341" y="176" font-weight="700">Normal remote module?</text><text x="341" y="198" font-size="12.5">Default path, with tech and cell</text><text x="341" y="218" font-size="12.5">conditions</text>
+    <text x="646" y="176" font-weight="700">Special module?</text><text x="646" y="198" font-size="12.5">Relations, Cutover, Backup</text><text x="646" y="218" font-size="12.5">Sets its own sub-folder</text>
+    <text x="36" y="320" font-weight="700">01_AP/&lt;node&gt;/</text><text x="36" y="344" font-size="12.5">ProjectInfo, NodeInfo,</text><text x="36" y="362" font-size="12.5">SiteBasic, Equipment, Installation</text>
+    <text x="341" y="320" font-weight="700">02_REMOTE/&lt;node&gt;/</text><text x="341" y="344" font-size="12.5">&lt;module&gt;_&lt;node&gt;.xml or .mos</text><text x="341" y="362" font-size="12.5">tmo_xml_base.py:24-27</text>
+    <text x="646" y="320" font-weight="700">02_REMOTE/&lt;sub-folder&gt;/</text><text x="646" y="344" font-size="12.5">NR_NR_Relations, LTE_NR_Relations,</text><text x="646" y="362" font-size="12.5">RADIO_CUTOVER, BACKUP_SCRIPT</text>
+  </g>
+</svg>
+</div>
+
+<p><b>Naming rule:</b> <code>C07_01a_Transport</code> + <code>MIE04692B3</code> → <code>01a_Transport_MIE04692B3.xml</code>. The leading <code>C..</code> part of the class name is dropped.</p>
+
+<h2>5. Your output folder (104 files)</h2>
+<pre>IE04692B_20261030005723/        <span class="c">&lt;SiteID&gt;_&lt;time&gt;  (views.py:35, save_file)</span>
+├─ 01_AP/  (10)                 <span class="c">BBChange=True, 5 files per node</span>
+│  ├─ MIE04692B2/ …
+│  └─ MIE04692B3/ …
+├─ 02_REMOTE/  (87)
+│  ├─ MIE04692B2/ (+BACKUP_SCRIPT) <span class="c">gNB-only node, NR + transport/equipment only</span>
+│  ├─ MIE04692B3/ (+BACKUP_SCRIPT) <span class="c">both eNB + gNB (MMBB), LTE + NR</span>
+│  ├─ NR_NR_Relations/          <span class="c">nr_10, 10c1, 10c2, 11, 12</span>
+│  ├─ LTE_NR_Relations/         <span class="c">lte_12_GUtraRelation</span>
+│  └─ RADIO_CUTOVER/MIE04692B3/ <span class="c">18 cells × 2 = 36 files</span>
+├─ 1_Node_Report_*.xlsx         <span class="c">Node, cells, antenna, RiLink</span>
+├─ 2_lte_EUtraNetwork_Report_*.xlsx
+├─ 3_lte_GUtraNetwork_Report_*.xlsx
+├─ 5_lte_GeraNetwork_Report_*.xlsx <span class="c">4_ Utra report: no data, so not generated</span>
+├─ IE04692B_CIQ.xlsx, DCGK.zip  <span class="c">Your uploads, included in the zip</span>
+└─ IE04692B_20261030005723.log  <span class="c">Time and status of every module</span></pre>
+
+<h2>6. When each file is generated</h2>
+<div class="scroll"><table>
+<tr><th>File / module</th><th>Condition</th><th>In this run</th></tr>
+<tr><td><code>C01–C05</code> (01_AP)</td><td><code>BBChange</code> is not False</td><td>Both B2, B3</td></tr>
+<tr><td><code>01a_Transport</code>, <code>02_Equipment</code></td><td>Every node; Transport checks BBChange</td><td>Both B2, B3</td></tr>
+<tr><td><code>01b_InternalRouting</code></td><td>Node is MMBB and prefix is not /32</td><td>B3 only</td></tr>
+<tr><td><code>lte_01–09</code>, <code>lte_12</code></td><td>Node has an eNodeB; some also need a cell add</td><td>B3 only</td></tr>
+<tr><td><code>lte_1_RadioCutOver</code>, <code>lte_2_RadioAddition</code></td><td>eNodeB node + cell <code>fruchange</code> True. Cell in the file name.</td><td>B3: B,D,E,J,K,L × 3 sectors</td></tr>
+<tr><td><code>lte_04_Delete_EUtranCell</code></td><td>A cell is moving off this node (<code>presite == node</code>)</td><td>No: presite of the moved cells is <code>MIE04692B</code>, which is not in the loop</td></tr>
+<tr><td><code>nr_01–05</code>, <code>nr_09a</code></td><td>Node has a gNodeB; 04/09a also need <code>addcell</code></td><td>Both B2, B3</td></tr>
+<tr><td><code>nr_09b_NRLB_Para</code></td><td>A K, J or I cell is being added</td><td>B3 only</td></tr>
+<tr><td><code>nr_09c_N41_Para</code></td><td>An A cell (N41) is being added</td><td>B2 only</td></tr>
+<tr><td><code>nr_09d_N41_BWP</code></td><td>A cells have 2+ different bandwidths</td><td>B2 only (100 and 90)</td></tr>
+<tr><td><code>nr_10</code></td><td><code>addcell</code> is True</td><td>Both B2, B3</td></tr>
+<tr><td><code>nr_10c1</code>, <code>nr_10c2</code></td><td>More than 1 gNodeB on the site</td><td>Both B2, B3</td></tr>
+<tr><td><code>nr_12_NR_CA</code>, <code>nr_20_lte_20_Idle</code></td><td>Valid <code>IDLE</code> value in CIQ</td><td>Both (TN_IDL_D, TN_IDL_C)</td></tr>
+<tr><td><code>nr_13</code>, <code>nr_14</code></td><td>Bloomfield, Norfolk, Philadelphia or Salina</td><td>No (Riverside)</td></tr>
+<tr><td><code>nr_15_VoNR</code></td><td>Syosset, Norfolk, Philadelphia, Bloomfield or Salina</td><td>No</td></tr>
+<tr><td><code>nr_16_BWP_Salina</code></td><td>Salina only</td><td>No</td></tr>
+<tr><td><code>nr_17_WPS_Bundle</code></td><td>Any market <b>except</b> Salina, Bloomfield, EastProvidence, Norton, with <code>addcell</code></td><td>Both B2, B3</td></tr>
+<tr><td><code>BACKUP_SCRIPT/*</code></td><td>Backup of the main script, or a <code>test_000_*</code> check script</td><td>Both B2, B3</td></tr>
+</table></div>
+
+<h2>7. Effect of each parameter</h2>
+<div class="scroll"><table>
+<tr><th>Input</th><th>What it decides</th></tr>
+<tr><td><b>Site ID</b></td><td>Only the folder/log/zip name. The node list comes from the CIQ.</td></tr>
+<tr><td><b>Software Release</b></td><td>SW package, nodeIdentifier, Mo baseline, and release-specific blocks in scripts (e.g. <code>swname[:9] &gt; 'TMO_25_Q3'</code>).</td></tr>
+<tr><td><b>SubNetwork</b></td><td><code>dnPrefix</code>, NTP, timezone, MME/AMF pool, and market-specific scripts.</td></tr>
+<tr><td><b>ENM</b></td><td>nodeIdentifier and the Client record. A wrong combination finds no Client and the request fails.</td></tr>
+<tr><td><b>CIQ</b></td><td>Nodes, cells, IP, VLAN, RF, BBType, IDLE. The first letter of the cell (A, J, K, L…) drives the band-specific logic.</td></tr>
+<tr><td><b>DCGK</b></td><td>Existing config: BBChange, presite, movement, fingerprint, old radios. This field is optional.</td></tr>
+</table></div>
+
+<h2>8. Failures and things to watch</h2>
+<div class="card">
+  <p><b>Module failure:</b> the <code>except</code> block logs the traceback, status becomes <code>Failed</code>, and the remaining modules stop. Files already written are zipped together with the log (<code>tmobile_jobs.py:43-54</code>).</p>
+  <p><b>Long jobs:</b> all the work runs inside the web request. This run took about 1 min 39 sec, and the browser waits that whole time.</p>
+  <p><b>Password:</b> <code>NodeInfo.xml</code> contains the node username/password, which is hardcoded in <code>tmo_data.py:2-3</code>. Be careful when sharing the zip.</p>
+</div>
+</main>
+</body>
+</html>

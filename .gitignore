@@ -1,0 +1,30 @@
+# Virtual environments
+venv/
+env_mscripter/
+env/
+.venv/
+
+# Environment variables / secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Django
+db.sqlite3
+db.sqlite3-journal
+*.log
+
+# Runtime generated files (folders auto-created at startup)
+media/
+
+# IDE / OS
+.vscode/
+.idea/
+.claude/
+Thumbs.db
+.DS_Store

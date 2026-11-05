@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block content %}
+{% load static %}
+<body class="sb-nav-fixed" style="background-color: #eff7fe;">
+    {% include "navHeader.html" %}
+    <div id="layoutSidenav">
+        {% include "navSideBar.html" %}
+        <div id="layoutSidenav_content">
+            <main>
+                <div class="container-fluid">
+                    <div class="container">
+                        <div class="row justify-content-center">
+                            <div class="col-md-12">
+                                <div class="card shadow-lg border-0 rounded-lg mt-5">
+                                    <div class="card-body">
+                                        {% for message in messages %}
+                                        <p style="color:green">{{message}}</p>
+                                        {% endfor %}
+                                        <form action="" method="POST" enctype="multipart/form-data" class="was-validated">
+                                            {% csrf_token %}
+                                            <!-- First Section -->
+                                            <div class="form-group row">
+                                                <div class="form-group col-md-6 row">
+                                                    <label class="col-md-4" for="market">Market Name</label>
+                                                    <select class="custom-select col-md-8" name="market" id="customer_nameSel" required
+                                                            onchange="updateMarketNameOptions(value,'market_nameSel');disableGrandChild('sw_releseSel');disableGrandChild('sw_enm');"></select>
+                                                </div>
+                                                <div class="form-group col-md-6 row">
+                                                    <label for="usm" class="col-md-4">USM</label>
+                                                    <select class="custom-select col-md-8" name="usm" id="market_nameSel" required disabled="disabled"
+                                                        onchange="updateSoftwareRelOptions(value,'sw_releseSel');disableGrandChild('sw_enm');"></select>
+                                                </div>
+                                                <div class="form-group col-md-6 row">
+                                                    <label for="sw" class="col-md-4" >Software Relese</label>
+                                                    <select class="custom-select col-md-8" name="sw" id="sw_releseSel" required disabled="disabled"
+                                                        onchange="updateEnmRelOptions(value,'sw_enm');"></select>
+                                                </div>
+                                               <div class="form-group col-md-6 row">
+                                                    <label for="siteid" class="col-md-4">Site ID</label>
+                                                    <input type="text" class="form-control col-md-8" id="siteid" name="siteid" placeholder="Enter Node Id.." required>
+                                                </div>
+                                               <div class="form-group col-md-6 row">
+                                                    <label for="cqfile" class="col-md-4">CIQ File</label>
+                                                    <div class="custom-file col-md-8">
+                                                        <input type="file" class="custom-file-input" id="cqfile" name="cqfile" required accept=".xlsx">
+                                                        <label class="custom-file-label" for="validatedCustomFile" id="cqfile_ID">
+                                                            Choose CIQ file (*.xlxs)...</label>
+                                                    </div>
+                                                </div>
+{#                                                <div class="form-group col-md-6 row">#}
+{#                                                    <label for="sw_log" class="col-md-4">DCGK Files</label>#}
+{#                                                    <div class="custom-file col-md-8">#}
+{#                                                        <input type="file" class="custom-file-input" id="sw_log" name="sw_log" accept=".zip">#}
+{#                                                        <label class="custom-file-label" for="validatedCustomFile" id="sw_log">Choose Log file (*.zip)...</label>#}
+{#                                                    </div>#}
+{#                                                </div>#}
+											</div>
+											<div class="form-row centerbtn">
+                                                <button type="submit" class="btn btn-primary">Create Script</button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                    <div class="card-footer text-center">
+                                        <div class="small footer-text"><a class="footer-text" href="/T-Mobile/sitelist">Script List</a></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <script>var customer1={{clints|safe}};</script>
+{% endblock %}
