@@ -10,7 +10,10 @@ from common_func.dcgkparse import parse_file
 class dcgkextract:
     def __init__(self, inzip=''):
         self.inzip = inzip
+        self.dir_source = {}
         self.log_dirs = None if self.inzip is None or len(self.inzip) == 0 else self.extract_all_zip(self.inzip)
+        self.mom_files = {}
+        self.source_files = {}
         self.merged_dict = self.process_dcgk_files_to_dict()
 
     def get_unzipped_dirs(self):
@@ -36,6 +39,7 @@ class dcgkextract:
                     if zip_file.endswith('zip'):
                         unzipped_dir.extend(self.extract_dir(os.path.join(n_outdir, zip_file)))
             shutil.rmtree(outdir)
+        for _ in unzipped_dir: self.dir_source[_] = [os.path.basename(inzip)] + self.dir_source.get(_, [])
         return unzipped_dir
 
     @staticmethod
@@ -83,5 +87,15 @@ class dcgkextract:
             #     merged_dict[site] = copy.deepcopy(dcg.get(site))
             # merged_dict[]
             merged_dict.update(copy.deepcopy(dcg))
+            zip_chain = ' > '.join(self.dir_source.get(indir, []))
+            for infile in os.listdir(indir_dcg):
+                if infile.endswith('dcg_k.log'):
+                    dcg_name = infile + '.gz' if os.path.exists(os.path.join(indir_dcg, infile + '.gz')) else infile
+                    for siteid in dcg.keys(): self.source_files.setdefault(siteid, {})['dcgk'] = F'{zip_chain} > {dcg_name}'
+                if infile.startswith('MSRBS_NODE_MODEL') and infile.endswith('.xml.gz'):
+                    with open(os.path.join(indir_dcg, infile), 'rb') as f: mom_data = f.read()
+                    for siteid in dcg.keys():
+                        self.mom_files[siteid] = mom_data
+                        self.source_files.setdefault(siteid, {})['mom'] = F'{zip_chain} > {infile}'
             if len(indir): shutil.rmtree(indir)
         return merged_dict

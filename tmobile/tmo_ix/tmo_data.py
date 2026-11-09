@@ -110,7 +110,18 @@ software_dict = {
 }
 
 nodeIdentifier_dict = {
-    'TMO_26_Q3_EC2': {},
+    'TMO_26_Q3_EC2': {
+        'PON09CNM': {
+            'RadioNode CXP2010174/2 R59C52 26.Q3': '7766-922-709',
+            'RadioNode CXP9024418/16 R20C43 RCG123.8': '4172-064-366',
+            'RadioNode CXP9024418/22 R87C44 RCG123.8': '1196-600-262',
+        },
+        'TIN18CNM': {
+            'RadioNode CXP2010174/2 R59C52 26.Q3': '7766-922-709',
+            'RadioNode CXP9024418/16 R20C43 RCG123.8': '4172-064-366',
+            'RadioNode CXP9024418/22 R87C44 RCG123.8': '1196-600-262',
+        },
+    },
     'TMO_26_Q2_EC2': {},
     'TMO_26_Q1_EC2': {
         'TIN18CNM': {

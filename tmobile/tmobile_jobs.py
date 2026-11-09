@@ -6,9 +6,10 @@ from django.conf import settings
 from common_func.custom_log import Custom_Log
 from tmobile.models import ScriptJob
 from tmobile.tmo_ix.tmo_usid_data import tmo_usid_data
+from tmobile.tmo_ix.tmo_debug_csv import files_snapshot, write_debug_csv
 
 
-def tmobile_job(script_job_id, cix_file, zip_file, base_dir, sites):
+def tmobile_job(script_job_id, cix_file, zip_file, base_dir, sites, debug=False):
     script_job = ScriptJob.objects.get(id=script_job_id)
     client = script_job.client
     script_job.status = 'Running'
@@ -27,7 +28,9 @@ def tmobile_job(script_job_id, cix_file, zip_file, base_dir, sites):
     try:
         log.info(F'Loading/Extracting data from CIQ and DCGK files into memory!!!')
         usid = tmo_usid_data(client=client, base_dir=base_dir, log=log, cix_file=cix_file, zip_file=zip_file, sites=sites)
+        usid.debug_csv = debug
         log.info(F'Data Successfully loaded into memory!!!')
+        log.info(F'Debug (CSV files): {"ON" if debug else "OFF"}')
         for node in set().union(usid.gnodeb.keys(), usid.enodeb.keys()):
             usid.script_dict = {'AP': False, 'SB': '', 'SE': '', 'SI': '', 'conf': []}
             log.info(F'Writing Scripts for T-Mobile Node {node}!!!')
@@ -36,8 +39,10 @@ def tmobile_job(script_job_id, cix_file, zip_file, base_dir, sites):
                 elif module[:3] == 'lte' and node not in usid.enodeb.keys(): continue
                 elif module[:2] == 'nr' and node not in usid.gnodeb.keys(): continue
                 log.info(F'Writing Scripts for T-Mobile Node {node} ---->{module}')
+                files_before = files_snapshot(base_dir) if debug else None
                 self = getattr(importlib.import_module(F'tmobile.tmo_ix.{module}'), module)(usid=usid, node=node)
                 self.run()
+                if debug: write_debug_csv(self, files_before)
         log.info(F'Job completed for T-Mobile Site : {sites}, Status: Successful!!!')
         script_job.status = 'Completed'
     except:

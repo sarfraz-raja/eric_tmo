@@ -6,6 +6,7 @@ import json
 import numpy as np
 from django.db.models import Q
 from .tmo_usid_data import tmo_usid_data
+from . import tmo_debug_csv
 from tmobile.models import MoAttribute, MoDetail, MoName, MoRelation
 
 
@@ -21,6 +22,10 @@ class tmo_xml_base:
         self.config_files_in_ap = False
         self.mo_dict = {}
         self.script_file = ''
+        self.csv_enabled = False
+        self.csv_failed = False
+        self.csv_rows = []
+        self.csv_root_ldn = ''
         if self.__class__.__name__.startswith('C'):
             self.relative_path = [F'02_REMOTE', self.node, F'{"_".join(self.__class__.__name__.split("_")[1:])}_{self.node}.xml']
         else:
@@ -310,7 +315,6 @@ class tmo_xml_base:
         return {_.get('parameter'): json.loads(_.get('value')) if _.get('value') else '' for _ in qs}
 
     def get_db_backupflag_attributes(self, moc, moid):
-        # backupflag True: DB (Excel) value of this MO instance gets preference over DCGK value
         qs = self.MoDetail.objects.filter((Q(mo__software=self.usid.client.software) & Q(mo__moc=moc) & Q(mo__moid=moid) & Q(mo__motype=self.motype)
                                            & Q(flag=True) & Q(backupflag=True))
                                           & (Q(bbversion='') | Q(bbversion__contains=self.bbversion))).values('parameter', 'value')
@@ -351,21 +355,24 @@ class tmo_xml_base:
     @staticmethod
     def validate_db_mo(*, mo: str) -> bool: return False if mo in [None, 'None', '', 'nan', np.nan, '""'] else True
 
-    def db_append_child_tags(self, motype, rel_tag):
+    def db_append_child_tags(self, motype, rel_tag, csv_parent=''):
         ret_mos = []
         mo_tag_ins = self.MoName.objects.filter(moc=motype, software=self.usid.client.software, motype=self.motype)
         if mo_tag_ins.exists():
             for mo_tag_in in mo_tag_ins:
-                if self.validate_db_moid(moid=mo_tag_in.moid): ret_mos.append(self.append_child_tags(mo_tag_in, rel_tag=rel_tag))
+                if self.validate_db_moid(moid=mo_tag_in.moid): ret_mos.append(self.append_child_tags(mo_tag_in, rel_tag=rel_tag, csv_parent=csv_parent))
         return ret_mos
 
-    def append_child_tags(self, motype, rel_tag):
-        parent_mo = self.mo_add_form_dict_xml(self.get_mo_related_attributes(motype), motype.moc)
+    def append_child_tags(self, motype, rel_tag, csv_parent=''):
+        mo_dict = self.get_mo_related_attributes(motype)
+        csv_mo = F'{csv_parent},{motype.moc}={motype.moid}'.lstrip(',')
+        if self.csv_enabled: tmo_debug_csv.track_mo(self, mo_name=csv_mo, moid=motype.moid, final=mo_dict, default=mo_dict, default_source='MOC')
+        parent_mo = self.mo_add_form_dict_xml(mo_dict, motype.moc)
         for children in self.MoRelation.objects.filter(parent=motype.moc, tag=rel_tag, software=self.usid.client.software):
             for child in self.MoName.objects.filter(moc=children.child, software=self.usid.client.software, motype=self.motype):
                 if (self.validate_db_moid(moid=child.moid) and
                         child.modetail_set.filter((Q(flag=True)) & (Q(bbversion='') | Q(bbversion__contains=self.bbversion))).exists()):
-                    child_mo = self.append_child_tags(child, rel_tag)
+                    child_mo = self.append_child_tags(child, rel_tag, csv_parent=csv_mo)
                     parent_mo.appendChild(child_mo)
         return parent_mo
 
@@ -379,9 +386,14 @@ class tmo_xml_base:
                 mo_attrs_db.update(self.get_db_attributes(self.get_end_moc(mo)))
                 mo_attrs_site = site.get_mo_attr_str(mo)
                 db_preferred = self.get_db_backupflag_attributes(self.get_end_moc(mo), mo.split('=')[-1])
+                csv_default, csv_source = dict(mo_attrs_db), {}
                 for key in mo_attrs_db:
                     if key in db_preferred: mo_attrs_db[key] = db_preferred[key]
                     else: mo_attrs_db[key] = mo_attrs_site.get(key, mo_attrs_db[key])
+                    csv_source[key] = 'MOC (backupflag)' if key in db_preferred else 'DCGK' if key in mo_attrs_site else 'MOC'
+                if self.csv_enabled:
+                    tmo_debug_csv.track_mo(self, mo_name=self.csv_ldn(mo), moid=mo.split('=')[-1], final=mo_attrs_db, default=csv_default,
+                                           dcgk=mo_attrs_site, source=csv_source, dcgk_site=pre_site)
                 moc_tag = self.get_end_moc(mo)
                 ret_mo = self.mo_add_form_dict_xml(mo_attrs_db, moc_tag)
                 for children in self.MoRelation.objects.filter(parent=moc, tag=tag, software=self.usid.client.software):
@@ -389,8 +401,10 @@ class tmo_xml_base:
                         ret_mo.appendChild(child)
                 ret_mos.append(ret_mo)
         else:
-            ret_mos.extend(self.db_append_child_tags(moc, tag))
+            ret_mos.extend(self.db_append_child_tags(moc, tag, csv_parent=self.csv_ldn(parent_str) if parent_str else self.csv_root_ldn))
         return ret_mos
+
+    def csv_ldn(self, mo: str) -> str: return re.sub(r'^.*?ManagedElement=[^,]*,?', '', mo)
 
     def get_mo_dict_from_site_or_db(self, *, moc: str, mo_id: str, node: str = '', parent: str = '') -> dict:
         mo = None

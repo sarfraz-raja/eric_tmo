@@ -26,3 +26,6 @@
   .custom-right{
     float: right;
   }
+.sb-nav-fixed #layoutSidenav #layoutSidenav_content {
+    min-height: calc(100vh - 110px);
+}

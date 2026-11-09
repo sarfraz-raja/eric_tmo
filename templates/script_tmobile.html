@@ -1,6 +1,52 @@
 {% extends "base.html" %}
 {% block content %}
 {% load static %}
+<style>
+    .ms-create { max-width: 1100px; margin: 4px auto 16px; }
+    .ms-create .ms-page-head { display: flex; align-items: flex-end; justify-content: space-between; margin-bottom: 12px; }
+    .ms-create .ms-page-title { margin: 0; font-size: 1.25rem; font-weight: 600; color: #143b64; }
+    .ms-create .ms-page-sub { margin: 2px 0 0; font-size: .82rem; color: #6c7a89; }
+    .ms-create .ms-card { background: #fff; border: 1px solid #e3e8ef; border-radius: 10px; box-shadow: 0 2px 8px rgba(20, 59, 100, .06); }
+    .ms-create .ms-section { padding: 16px 24px; border-bottom: 1px solid #edf1f6; }
+    .ms-create .ms-section-title { margin: 0 0 10px; font-size: .72rem; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: #6c7a89; }
+    .ms-create .ms-section .form-group { margin-bottom: 0; }
+    @media (max-width: 767px) { .ms-create .ms-section .form-group { margin-bottom: 12px; } }
+    .ms-create .ms-label { display: block; margin-bottom: 4px; font-size: .85rem; font-weight: 500; color: #2d3748; }
+    .ms-create .ms-req { color: #c53030; margin-left: 2px; }
+    .ms-create .ms-help { display: block; margin-top: 4px; font-size: .76rem; color: #6c7a89; }
+    .ms-create .custom-select, .ms-create .form-control, .ms-create .custom-file-label { border-color: #cfd8e3; border-radius: 6px; font-size: .9rem; }
+    .ms-create .custom-select:focus, .ms-create .form-control:focus, .ms-create .custom-file-input:focus ~ .custom-file-label {
+        border-color: #143b64; box-shadow: 0 0 0 3px rgba(20, 59, 100, .15); }
+    .ms-create .custom-select:disabled { background-color: #f4f6f9; color: #9aa5b1; }
+    .ms-create .custom-file-label { color: #6c7a89; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding-right: 90px; }
+    .ms-create .custom-file-label.selected { color: #2d3748; }
+    .ms-create .custom-file-label::after { content: "Browse"; background: #f4f6f9; color: #143b64; font-weight: 500; border-left-color: #cfd8e3; }
+    .ms-create .ms-actions { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+                             padding: 12px 24px; background: #fafbfd; border-radius: 0 0 10px 10px; }
+    .ms-create .ms-actions .ms-help { margin-top: 2px; }
+    .ms-create .ms-btn { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 18px; border-radius: 6px;
+                         font-size: .9rem; font-weight: 600; border: 1px solid #143b64; cursor: pointer; transition: background-color .15s ease; }
+    .ms-create .ms-btn-primary { background: #143b64; color: #fff; }
+    .ms-create .ms-btn-primary:hover { background: #0f2e4f; }
+    .ms-create .ms-btn-secondary { background: #fff; color: #143b64; margin-right: 10px; }
+    .ms-create .ms-btn-secondary:hover { background: #f0f4f9; }
+    .ms-create .ms-btn:disabled { opacity: .7; cursor: not-allowed; }
+    .ms-create .ms-spinner { display: none; width: 14px; height: 14px; border: 2px solid rgba(255, 255, 255, .4); border-top-color: #fff;
+                             border-radius: 50%; animation: ms-spin .8s linear infinite; }
+    .ms-create .ms-busy .ms-spinner { display: inline-block; }
+    @keyframes ms-spin { to { transform: rotate(360deg); } }
+    .ms-create .ms-links a { font-size: .875rem; font-weight: 500; color: #143b64; }
+    .debug-toggle { display: inline-flex; align-items: center; gap: 10px; margin: 0; cursor: pointer; user-select: none; }
+    .debug-toggle input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+    .debug-toggle-track { position: relative; flex: 0 0 auto; width: 40px; height: 22px; border-radius: 11px;
+                          background: #c9d1dc; transition: background-color .2s ease; }
+    .debug-toggle-thumb { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%;
+                          background: #fff; box-shadow: 0 1px 2px rgba(0, 0, 0, .25); transition: transform .2s ease; }
+    .debug-toggle input:checked + .debug-toggle-track { background: #143b64; }
+    .debug-toggle input:checked + .debug-toggle-track .debug-toggle-thumb { transform: translateX(18px); }
+    .debug-toggle input:focus-visible + .debug-toggle-track { box-shadow: 0 0 0 3px rgba(20, 59, 100, .25); }
+    .debug-toggle-text { font-size: .9rem; font-weight: 500; color: #2d3748; }
+</style>
 <body class="sb-nav-fixed" style="background-color: #eff7fe;">
     {% include "navHeader.html" %}
     <div id="layoutSidenav">
@@ -8,68 +54,120 @@
         <div id="layoutSidenav_content">
             <main>
                 <div class="container-fluid">
-                    <div class="container">
-                        <div class="row justify-content-center">
-                            <div class="col-md-12">
-                                <div class="card shadow-lg border-0 rounded-lg mt-5">
-                                    <div class="card-body">
-                                        {% for message in messages %}
-                                        <p style="color:green">{{message}}</p>
-                                        {% endfor %}
-                                        <form action="" method="POST" enctype="multipart/form-data" class="was-validated">
-                                            {% csrf_token %}
-                                            <!-- First Section -->
-                                            <div class="form-group row">
-                                                <div class="form-group col-md-6 row">
-                                                    <label for="swrel" class="col-md-4" >Software Relese</label>
-                                                    <select class="custom-select col-md-8" name="swrel" id="sw_nameSel" required
-                                                        onchange="updateMarketNameOptions(value,'market_nameSel'); disableGrandChild('enm_nameSel');"></select>
-                                                </div>
-                                                <div class="form-group col-md-6 row">
-                                                    <label for="mname" class="col-md-4">SubNetwork</label>
-                                                    <select class="custom-select col-md-8" name="mname" id="market_nameSel" required disabled="disabled"
-                                                        onchange="updateEnmRelOptions(value,'enm_nameSel');"></select>
-                                                </div>
+                    <div class="ms-create">
+                        <div class="ms-page-head">
+                            <div>
+                                <h1 class="ms-page-title">Create Script</h1>
+                                <p class="ms-page-sub">Generate T-Mobile LTE/NR integration scripts from CIQ and DCGK files. Fields marked <span class="ms-req">*</span> are required.</p>
+                            </div>
+                            <div class="ms-links"><a href="/T-Mobile/sitelist">View Script List &rarr;</a></div>
+                        </div>
 
-                                                <div class="form-group col-md-6 row">
-                                                    <label for="sw_enm" class="col-md-4" >ENM</label>
-                                                    <select class="custom-select col-md-8" name="sw_enm" id="enm_nameSel" required disabled="disabled"></select>
-                                                </div>
-											   <div class="form-group col-md-6 row">
-                                                    <label for="siteid" class="col-md-4">Site ID</label>
-                                                    <input type="text" class="form-control col-md-8" id="siteid" name="siteid" placeholder="Enter Node Id.." required>
-                                                </div>
-                                               <div class="form-group col-md-6 row">
-                                                    <label for="ciqfile" class="col-md-4">CIQ File</label>
-                                                    <div class="custom-file col-md-8">
-                                                        <input type="file" class="custom-file-input" id="ciqfile" name="ciqfile" required accept=".xlsx">
-                                                        <label class="custom-file-label" for="validatedCustomFile" id="ciqfile_ID">Choose CIQ file (*.xlxs)...</label>
-                                                    </div>
-                                                </div>
-                                                <div class="form-group col-md-6 row">
-                                                    <label for="software_log" class="col-md-4">DCGK Files</label>
-                                                    <div class="custom-file col-md-8">
-                                                        <input type="file" class="custom-file-input" id="software_log" name="software_log" accept=".zip">
-                                                        <label class="custom-file-label" for="validatedCustomFile" id="software_log">Choose Log file (*.zip)...</label>
-                                                    </div>
-                                                </div>
-											</div>
-											<div class="form-row centerbtn">
-                                                <button type="submit" class="btn btn-primary">Create Script</button>
-                                            </div>
-                                        </form>
+                        {% for message in messages %}
+                        <div class="alert alert-success" role="alert">{{ message }}</div>
+                        {% endfor %}
+
+                        <form action="" method="POST" enctype="multipart/form-data" id="createScriptForm" novalidate>
+                            {% csrf_token %}
+                            <div class="ms-card">
+                                <div class="ms-section">
+                                    <h2 class="ms-section-title">Network</h2>
+                                    <div class="form-row">
+                                        <div class="form-group col-md-4">
+                                            <label for="sw_nameSel" class="ms-label">Software Release<span class="ms-req">*</span></label>
+                                            <select class="custom-select" name="swrel" id="sw_nameSel" required
+                                                onchange="updateMarketNameOptions(value,'market_nameSel'); disableGrandChild('enm_nameSel');"></select>
+                                            <div class="invalid-feedback">Select a software release</div>
+                                        </div>
+                                        <div class="form-group col-md-4">
+                                            <label for="market_nameSel" class="ms-label">SubNetwork<span class="ms-req">*</span></label>
+                                            <select class="custom-select" name="mname" id="market_nameSel" required disabled="disabled"
+                                                onchange="updateEnmRelOptions(value,'enm_nameSel');"></select>
+                                            <div class="invalid-feedback">Select a SubNetwork</div>
+                                        </div>
+                                        <div class="form-group col-md-4">
+                                            <label for="enm_nameSel" class="ms-label">ENM<span class="ms-req">*</span></label>
+                                            <select class="custom-select" name="sw_enm" id="enm_nameSel" required disabled="disabled"></select>
+                                            <div class="invalid-feedback">Select an ENM</div>
+                                        </div>
                                     </div>
-                                    <div class="card-footer text-center">
-                                        <div class="small footer-text"><a class="footer-text" href="/T-Mobile/sitelist">Script List</a></div>
+                                </div>
+
+                                <div class="ms-section">
+                                    <h2 class="ms-section-title">Site &amp; Input Files</h2>
+                                    <div class="form-row">
+                                        <div class="form-group col-md-4">
+                                            <label for="siteid" class="ms-label">Site ID<span class="ms-req">*</span></label>
+                                            <input type="text" class="form-control" id="siteid" name="siteid" placeholder="e.g. IE25872B" required>
+                                            <div class="invalid-feedback">Enter the Site ID</div>
+                                        </div>
+                                        <div class="form-group col-md-4">
+                                            <label for="ciqfile" class="ms-label">CIQ File<span class="ms-req">*</span></label>
+                                            <div class="custom-file">
+                                                <input type="file" class="custom-file-input" id="ciqfile" name="ciqfile" required accept=".xlsx">
+                                                <label class="custom-file-label" for="ciqfile" id="ciqfile_ID">Choose file</label>
+                                                <div class="invalid-feedback">Upload the CIQ file</div>
+                                            </div>
+                                            <small class="ms-help">Excel workbook (.xlsx)</small>
+                                        </div>
+                                        <div class="form-group col-md-4">
+                                            <label for="software_log" class="ms-label">DCGK Files</label>
+                                            <div class="custom-file">
+                                                <input type="file" class="custom-file-input" id="software_log" name="software_log" accept=".zip">
+                                                <label class="custom-file-label" for="software_log">Choose file</label>
+                                            </div>
+                                            <small class="ms-help">Node dumps (.zip). Optional, needed for existing nodes</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="ms-actions">
+                                    <div>
+                                        <label class="debug-toggle" for="debug">
+                                            <input type="checkbox" id="debug" name="debug" value="on">
+                                            <span class="debug-toggle-track"><span class="debug-toggle-thumb"></span></span>
+                                            <span class="debug-toggle-text">Debug: generate CSV report</span>
+                                        </label>
+                                        <small class="ms-help">Adds a parameter source report (CSV) to the script package</small>
+                                    </div>
+                                    <div>
+                                        <button type="reset" class="ms-btn ms-btn-secondary" id="resetBtn">Reset</button>
+                                        <button type="submit" class="ms-btn ms-btn-primary" id="createScriptBtn">
+                                            <span class="ms-spinner" aria-hidden="true"></span><span class="ms-btn-text">Create Script</span>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </form>
                     </div>
                 </div>
             </main>
         </div>
     </div>
     <script>var customer1={{ customer1|safe}};</script>
+    <script>
+        (function () {
+            var form = document.getElementById('createScriptForm');
+            var btn = document.getElementById('createScriptBtn');
+            form.addEventListener('submit', function (event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    form.classList.add('was-validated');
+                    return;
+                }
+                btn.disabled = true;
+                btn.classList.add('ms-busy');
+                btn.querySelector('.ms-btn-text').textContent = 'Generating scripts...';
+            });
+            form.addEventListener('reset', function () {
+                setTimeout(function () {
+                    form.classList.remove('was-validated');
+                    form.querySelectorAll('.custom-file-label').forEach(function (l) { l.classList.remove('selected'); l.textContent = 'Choose file'; });
+                    ['market_nameSel', 'enm_nameSel'].forEach(function (id) {
+                        var s = document.getElementById(id); s.innerHTML = ''; s.disabled = true;
+                    });
+                });
+            });
+        })();
+    </script>
 {% endblock %}
-
