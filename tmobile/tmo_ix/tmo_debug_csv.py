@@ -8,7 +8,7 @@ from xml.etree import ElementTree
 from django.db.models import Q
 from tmobile.models import MoDetail
 
-COLUMNS = ['node', 'script', 'file', 'mo_name', 'moc', 'parameter_name', 'operator', 'parameter_value', 'in_script', 'source',
+COLUMNS = ['node', 'script', 'file', 'message_id', 'mo_name', 'moc', 'parameter_name', 'operator', 'parameter_value', 'in_script', 'source',
            'source_method', 'value_file', 'db_value', 'dcgk_value', 'backupflag', 'mom_flags', 'takes_effect', 'mom_file', 'remark']
 FUNCTION_MOTYPE = {'ENodeBFunction': 'Lrat', 'GNBDUFunction': 'GNBDU', 'GNBCUCPFunction': 'GNBCUCP', 'GNBCUUPFunction': 'GNBCUUP'}
 MOS_WRITE = ['crn', 'cr', 'set', 'mset', 'rset', 'lset', 'lmset', 'del', 'rdel', 'ldel', 'lrdel', 'bl', 'deb', 'lbl', 'ldeb', 'acc', 'lacc', 'ld']
@@ -40,7 +40,7 @@ def write_debug_csv(script, files_before: dict or None) -> None:
             try:
                 same_file = script.script_file and os.path.normcase(os.path.abspath(path)) == os.path.normcase(os.path.abspath(script.script_file))
                 tracked = script.csv_rows if script.csv_rows and not script.csv_failed and same_file else None
-                rows = tracked if tracked else rows_from_file(script, path)
+                rows = with_message_ids(script, path, tracked) if tracked else rows_from_file(script, path)
                 if rows: write_rows(script, path, rows)
             except Exception as e:
                 script.usid.log.info(F'Debug CSV not created for {path}: {e}')
@@ -235,10 +235,19 @@ def rows_from_file(script, path: str) -> list:
     return derived_rows(script, mos_entries(script, text), 'mos')
 
 
+def with_message_ids(script, path: str, rows: list) -> list:
+    if not path.lower().endswith('.xml'): return rows
+    with open(path, encoding='utf-8', errors='ignore') as f: text = f.read()
+    msg_ids = {}
+    for _, mo, _, _, msg_id in xml_entries(script, text):
+        if msg_id not in msg_ids.setdefault(mo, []): msg_ids[mo].append(msg_id)
+    return [{**row, 'message_id': '|'.join(msg_ids.get(row['mo_name'], []))} for row in rows]
+
+
 def xml_entries(script, text: str) -> list:
     entries = []
 
-    def walk(elem, parent):
+    def walk(elem, parent, msg_id):
         kids = [_ for _ in elem.childNodes if _.nodeType == 1]
         tag = elem.tagName.split(':')[-1]
         id_tag = tag[:1].lower() + tag[1:] + 'Id'
@@ -247,19 +256,19 @@ def xml_entries(script, text: str) -> list:
         mo_name = F'{parent},{tag}={mo_id}'.lstrip(',')
         attrs = dict(elem.attributes.items()) if elem.attributes else {}
         op = next((XML_OPERATION.get(v, v) for k, v in attrs.items() if k.split(':')[-1] == 'operation'), '')
-        entries.append((op, mo_name, id_tag, mo_id))
+        entries.append((op, mo_name, id_tag, mo_id, msg_id))
         values, counts = {}, {}
         for c in kids:
             c_tag = c.tagName.split(':')[-1]
             c_kids = [_ for _ in c.childNodes if _.nodeType == 1]
             if c_tag == id_tag: continue
             if c_kids and any(_.tagName.split(':')[-1] == c_tag[:1].lower() + c_tag[1:] + 'Id' for _ in c_kids):
-                walk(c, '' if tag == 'ManagedElement' else mo_name)
+                walk(c, '' if tag == 'ManagedElement' else mo_name, msg_id)
                 continue
             counts[c_tag] = counts.get(c_tag, 0) + 1
             for para, val in flat_xml(c, c_tag, counts[c_tag] - 1, sum(1 for _ in kids if _.tagName.split(':')[-1] == c_tag)):
                 values[para] = F'{values[para]};{val}' if para in values else val
-        entries.extend((op, mo_name, para, val) for para, val in values.items())
+        entries.extend((op, mo_name, para, val, msg_id) for para, val in values.items())
 
     def flat_xml(elem, name, index, total):
         kids = [_ for _ in elem.childNodes if _.nodeType == 1]
@@ -273,8 +282,9 @@ def xml_entries(script, text: str) -> list:
         except Exception as e:
             script.usid.log.info(F'Debug CSV: xml part not read ({e})')
             continue
+        msg_id = next((_.getAttribute('message-id') for _ in doc.getElementsByTagName('*') if _.tagName.split(':')[-1] == 'rpc'), '')
         for config in [_ for _ in doc.getElementsByTagName('*') if _.tagName.split(':')[-1] == 'config']:
-            for mo in [_ for _ in config.childNodes if _.nodeType == 1]: walk(mo, '')
+            for mo in [_ for _ in config.childNodes if _.nodeType == 1]: walk(mo, '', msg_id)
     return entries
 
 
@@ -309,7 +319,7 @@ def mos_entries(script, text: str) -> list:
 def derived_rows(script, entries: list, fmt: str) -> list:
     rows, mo_cache = [], {}
     site_dcgk = dcgk_index(script, script.node)
-    for op, mo_name, para, val in entries:
+    for op, mo_name, para, val, *msg_id in entries:
         key = re.sub(r'\[\d+\]', '', para).split('.')[0]
         mo = mo_name.rstrip('$,')
         moc = mo.split(',')[-1].split('=')[0]
@@ -340,7 +350,7 @@ def derived_rows(script, entries: list, fmt: str) -> list:
         if source == 'DCGK' and db_val not in ['', val]: remark.append('DCGK value differs from MOC')
         if val == '' and op in ['crn', 'set', 'mset', 'rset', 'lset', ''] and para: remark.append('empty value')
         if not read_cmd and para and not pattern and operator in ['crn', 'set', 'rset', 'mset', 'ld']: remark += mom_remarks(script, cls, key, flags)
-        rows.append({'node': script.node, 'script': script.__class__.__name__, 'mo_name': mo_name, 'moc': moc, 'parameter_name': para,
+        rows.append({'node': script.node, 'script': script.__class__.__name__, 'message_id': msg_id[0] if msg_id else '', 'mo_name': mo_name, 'moc': moc, 'parameter_name': para,
                      'operator': operator, 'parameter_value': val, 'in_script': 'yes', 'source': source, 'source_method': 'derived (value match)',
                      'value_file': value_file(script, source if 'Script' not in source else '', script.node),
                      'db_value': db_val, 'dcgk_value': dcgk_val, 'backupflag': bf_text(db_params[key][1]) if key in db_params else '',

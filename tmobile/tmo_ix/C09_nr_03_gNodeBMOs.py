@@ -41,8 +41,7 @@ class C09_nr_03_gNodeBMOs(tmo_xml_base):
             me_mo.appendChild(xml_mo)
             uecc_mo = self.mo_add_form_dict_xml({'ueCCId': '1'}, 'UeCC')
             xml_mo.appendChild(uecc_mo)
-            parent_ldn = F'{self.dcgk_function_ldn()},UeCC=1' if self.dcgk_function_ldn() else None
-            for mo in self.sub_mo_db_append_child_special_method(moc_dict=UeCC_mod_dict, sub_moc=moc, parent_ldn=parent_ldn):
+            for mo in self.sub_mo_db_append_child_special_method(moc_dict=UeCC_mod_dict, sub_moc=moc):
                 uecc_mo.appendChild(mo)
             rcp_msgs.append(doc)
 
@@ -54,7 +53,7 @@ class C09_nr_03_gNodeBMOs(tmo_xml_base):
             config.appendChild(me_mo)
             xml_mo = self.mo_add_form_dict_xml({self.get_moc_id(moc=F'{mo_type}Function'): '1'}, F'{mo_type}Function')
             me_mo.appendChild(xml_mo)
-            for mo in self.db_append_child_special_method(moc_dict=moc_dict[mo_type], parent_ldn=self.dcgk_function_ldn()):
+            for mo in self.db_append_child_special_method(moc_dict=moc_dict[mo_type]):
                 xml_mo.appendChild(mo)
             rcp_msgs.append(doc)
         return rcp_msgs
@@ -628,36 +627,18 @@ class C09_nr_03_gNodeBMOs(tmo_xml_base):
 
 
 
-    def dcgk_function_ldn(self) -> str or None:
-        # DCGK LDN of GNBDUFunction / GNBCUCPFunction / GNBCUUPFunction for existing node, None for new node
-        return self.gnbdata.get(F'{self.motype}Function') if self.site else None
-
-    def update_mo_dict_with_dcgk(self, mo_dict: dict, mo_name, ldn: str or None) -> dict:
-        # Same as log_append_child_tags: DB gives parameter list, DCGK value gets preference, backupflag True keeps DB value
-        # MO references (...Ref) stay from DB, MO instances are created from moc_dict so DCGK reference may point to missing MO
-        if ldn is None or self.site.dcg.get(ldn) is None: return mo_dict
-        mo_attrs_site = self.site.get_mo_attr_str(ldn)
-        moc_id = self.get_moc_id(moc=mo_name.moc)
-        # DB id value not same as DB moid (Excel data mismatch, e.g. moid Sercomm with id RedCap_UE): keep DB values
-        if str(mo_dict.get(moc_id)) != mo_name.moid.split(',')[-1]: return mo_dict
-        db_preferred = [self.lower_first_char(_) for _ in self.get_db_backupflag_attributes(mo_name.moc, mo_name.moid)]
-        for key in mo_dict:
-            if key == moc_id or key.endswith('Ref') or key in db_preferred: continue
-            mo_dict[key] = mo_attrs_site.get(key, mo_dict[key])
-        return mo_dict
-
-    def db_append_child_special_method(self, *, moc_dict, parent_ldn: str = None) -> list:
+    def db_append_child_special_method(self, *, moc_dict) -> list:
         ret_mos = []
         for moc in moc_dict.keys():
             if moc == 'id' or moc_dict[moc].get('id') is None or len(moc_dict[moc].get('id')) == 0: continue
             mo_names = self.MoName.objects.filter(moc=moc, software=self.usid.client.software, motype=self.motype)
             for mo_name in mo_names:
                 if mo_name.moid in moc_dict[moc].get('id'):
-                    xml_mo = self.append_child_tags_special_method(mo_name=mo_name, moc_dict=moc_dict[moc], moid=mo_name.moid, parent_ldn=parent_ldn)
+                    xml_mo = self.append_child_tags_special_method(mo_name=mo_name, moc_dict=moc_dict[moc], moid=mo_name.moid)
                     if xml_mo: ret_mos.append(xml_mo)
         return ret_mos
 
-    def sub_mo_db_append_child_special_method(self, *, moc_dict, sub_moc: str, moid: str = '1', parent_ldn: str = None) -> list:
+    def sub_mo_db_append_child_special_method(self, *, moc_dict, sub_moc: str, moid: str = '1') -> list:
         ret_mos = []
         for moc in moc_dict.keys():
             if moc == 'id' or moc_dict[moc].get('id') is None or len(moc_dict[moc].get('id')) == 0: continue
@@ -666,15 +647,13 @@ class C09_nr_03_gNodeBMOs(tmo_xml_base):
             moid_list = [F'{moid},{_}' for _ in moc_dict[moc].get('id')]
             for mo_name in mo_names:
                 if mo_name.moid in moid_list:
-                    xml_mo = self.append_child_tags_special_method(mo_name=mo_name, moc_dict=moc_dict[moc], moid=mo_name.moid, parent_ldn=parent_ldn)
+                    xml_mo = self.append_child_tags_special_method(mo_name=mo_name, moc_dict=moc_dict[moc], moid=mo_name.moid)
                     if xml_mo: ret_mos.append(xml_mo)
         return ret_mos
 
-    def append_child_tags_special_method(self, mo_name, moc_dict, moid, parent_ldn: str = None) -> Element or None:
+    def append_child_tags_special_method(self, mo_name, moc_dict, moid) -> Element or None:
         mo_dict = self.get_mo_related_attributes(mo_name)
         mo_dict |= {self.get_moc_id(moc=mo_name.moc): mo_dict.get(self.get_moc_id(moc=mo_name.moc)).split(',')[-1]}
-        ldn = F'{parent_ldn},{mo_name.moc}={moid.split(",")[-1]}' if parent_ldn else None
-        mo_dict = self.update_mo_dict_with_dcgk(mo_dict, mo_name, ldn)
         parent_mo = self.mo_add_form_dict_xml(copy.deepcopy(mo_dict), mo_name.moc)
         for moc in moc_dict.keys():
             if moc == 'id' or moc_dict[moc].get('id') is None or len(moc_dict[moc].get('id')) == 0: continue
@@ -682,7 +661,7 @@ class C09_nr_03_gNodeBMOs(tmo_xml_base):
             for moc_c in self.MoName.objects.filter(moc=moc, software=self.usid.client.software, motype=self.motype):
                 # print(F'{moc} -> {moid_list} -> {moc_c.moid}')
                 if moc_c.moid not in moid_list: continue
-                child_mo = self.append_child_tags_special_method(moc_c, moc_dict=moc_dict[moc], moid=moc_c.moid, parent_ldn=ldn)
+                child_mo = self.append_child_tags_special_method(moc_c, moc_dict=moc_dict[moc], moid=moc_c.moid)
                 if child_mo: parent_mo.appendChild(child_mo)
         return parent_mo
 

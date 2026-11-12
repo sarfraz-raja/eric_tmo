@@ -10,11 +10,21 @@ class nr_04_NRCell(tmo_xml_base):
         if len(self.gnbdata) == 0: return
         if len(self.df_gnb_cell.loc[self.df_gnb_cell.addcell].index) == 0: return
         self.write_backup_script_file(script_list=self.create_mos_msg())
+        self.rpc_parts = []
         try:
             self.script_list = [self.rcp_msg_capabilities()] + self.create_rpc_msg() + [self.rcp_msg_close()]
         except Exception as e:
             self.usid.log.info(F'nr_04_NRCell {self.node}: XML not created ({e}), MOS script available in BACKUP_SCRIPT')
-            self.script_list = []
+            self.script_list, self.rpc_parts = [], []
+
+    def write_script_file(self) -> None:
+        if len(self.script_list) == 0 or len(self.rpc_parts) == 0: return super().write_script_file()
+        file_name = self.relative_path[-1]
+        for index, (msg_id, doc) in enumerate(self.rpc_parts, start=1):
+            ordinal = F'{index}{"th" if 10 <= index % 100 <= 20 else {1: "st", 2: "nd", 3: "rd"}.get(index % 10, "th")}'
+            self.relative_path[-1] = F'{file_name[:-4]}_{ordinal}_{msg_id}.xml'
+            self.script_list = [self.rcp_msg_capabilities(), doc, self.rcp_msg_close()]
+            super().write_script_file()
 
     def create_mos_msg(self):
         self.xml_mo_list, self.xml_set_dict = [], {}
@@ -368,6 +378,7 @@ get TrStSaCellProfileUeCfg=Base rsrpPCellCandidatePcOffset
             xml_mos = {'': me_mo}
             for ldn, moc, para_dict in mo_list: self.add_xml_mo(xml_mos, ldn, moc, para_dict)
             rpc_msgs.append(doc)
+            self.rpc_parts.append((msg_id, doc))
         return rpc_msgs
 
     def add_xml_mo(self, xml_mos: dict, ldn: str, moc: str, para_dict: dict) -> None:

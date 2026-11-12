@@ -31,3 +31,7 @@ Thumbs.db
 
 # Local helper scripts (not part of the tool)
 tests/
+
+# Personal change log (not part of the tool)
+CHANGE_LOG.xlsx
+~$*.xlsx
