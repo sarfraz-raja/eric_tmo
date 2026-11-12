@@ -5,6 +5,8 @@ app_name = 'tmobile'
 urlpatterns = [
     path('script/', views.script_tmobile, name="script_tmobile"),
     path('sitelist/', views.sitelist_tmobile, name="sitelist_tmobile"),
+    path('convert/', views.convert_tmobile, name="convert_tmobile"),
+    path('convert/template/', views.convert_template_tmobile, name="convert_template_tmobile"),
     ]
 
 # from django.conf import settings

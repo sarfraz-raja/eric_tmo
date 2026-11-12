@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% block content %}
+{% load static %}
+<style>
+    .ms-convert { max-width: 1100px; margin: 4px auto 16px; }
+    .ms-convert .ms-page-head { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
+    .ms-convert .ms-page-title { margin: 0; font-size: 1.25rem; font-weight: 600; color: #143b64; }
+    .ms-convert .ms-page-sub { margin: 2px 0 0; font-size: .82rem; color: #6c7a89; }
+    .ms-convert .ms-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 991px) { .ms-convert .ms-grid { grid-template-columns: 1fr; } }
+    .ms-convert .ms-card { display: flex; flex-direction: column; background: #fff; border: 1px solid #e3e8ef; border-radius: 10px;
+                           box-shadow: 0 2px 8px rgba(20, 59, 100, .06); }
+    .ms-convert .ms-section { flex: 1; padding: 16px 24px; }
+    .ms-convert .ms-section-title { margin: 0 0 14px; font-size: .95rem; font-weight: 600; color: #143b64; }
+    .ms-convert .ms-label { display: block; margin-bottom: 4px; font-size: .85rem; font-weight: 500; color: #2d3748; }
+    .ms-convert .ms-req { color: #c53030; margin-left: 2px; }
+    .ms-convert .ms-help { display: block; margin-top: 4px; font-size: .76rem; color: #6c7a89; }
+    .ms-convert .custom-file-label { border-color: #cfd8e3; border-radius: 6px; font-size: .9rem; color: #6c7a89;
+                                     overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding-right: 90px; }
+    .ms-convert .custom-file-label.selected { color: #2d3748; }
+    .ms-convert .custom-file-label::after { content: "Browse"; background: #f4f6f9; color: #143b64; font-weight: 500; border-left-color: #cfd8e3; }
+    .ms-convert .custom-file-input:focus ~ .custom-file-label { border-color: #143b64; box-shadow: 0 0 0 3px rgba(20, 59, 100, .15); }
+    .ms-convert .ms-actions { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+                              padding: 12px 24px; background: #fafbfd; border-top: 1px solid #edf1f6; border-radius: 0 0 10px 10px; }
+    .ms-convert .ms-btn { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 18px; border-radius: 6px;
+                          font-size: .9rem; font-weight: 600; border: 1px solid #143b64; cursor: pointer; transition: background-color .15s ease;
+                          text-decoration: none; }
+    .ms-convert .ms-btn-primary { background: #143b64; color: #fff; }
+    .ms-convert .ms-btn-primary:hover { background: #0f2e4f; color: #fff; }
+    .ms-convert .ms-btn-secondary { background: #fff; color: #143b64; }
+    .ms-convert .ms-btn-secondary:hover { background: #f0f4f9; color: #143b64; text-decoration: none; }
+    .ms-convert .ms-btn:disabled { opacity: .7; cursor: not-allowed; }
+    .ms-convert .ms-spinner { display: none; width: 14px; height: 14px; border: 2px solid rgba(255, 255, 255, .4); border-top-color: #fff;
+                              border-radius: 50%; animation: ms-spin .8s linear infinite; }
+    .ms-convert .ms-busy .ms-spinner { display: inline-block; }
+    @keyframes ms-spin { to { transform: rotate(360deg); } }
+    .ms-convert .ms-status { display: none; margin: 12px 0 0; padding: 8px 12px; border-radius: 6px; font-size: .84rem; }
+    .ms-convert .ms-status.is-error { display: block; background: #fdecec; color: #9b2c2c; border: 1px solid #f5c2c2; }
+    .ms-convert .ms-status.is-ok { display: block; background: #e8f5ee; color: #22543d; border: 1px solid #b8e0c8; }
+    .ms-convert .ms-toggle { display: inline-flex; align-items: center; gap: 10px; margin: 0; cursor: pointer; user-select: none; }
+    .ms-convert .ms-toggle input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+    .ms-convert .ms-toggle-track { position: relative; flex: 0 0 auto; width: 40px; height: 22px; border-radius: 11px; background: #c9d1dc;
+                                   transition: background-color .2s ease; }
+    .ms-convert .ms-toggle-thumb { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff;
+                                   box-shadow: 0 1px 2px rgba(0, 0, 0, .25); transition: transform .2s ease; }
+    .ms-convert .ms-toggle input:checked + .ms-toggle-track { background: #143b64; }
+    .ms-convert .ms-toggle input:checked + .ms-toggle-track .ms-toggle-thumb { transform: translateX(18px); }
+    .ms-convert .ms-toggle input:focus-visible + .ms-toggle-track { box-shadow: 0 0 0 3px rgba(20, 59, 100, .25); }
+    .ms-convert .ms-toggle-text { font-size: .85rem; font-weight: 500; color: #2d3748; }
+</style>
+<body class="sb-nav-fixed" style="background-color: #eff7fe;">
+    {% include "navHeader.html" %}
+    <div id="layoutSidenav">
+        {% include "navSideBar.html" %}
+        <div id="layoutSidenav_content">
+            <main>
+                <div class="container-fluid">
+                    <div class="ms-convert">
+                        <div class="ms-page-head">
+                            <div>
+                                <h1 class="ms-page-title">CSV / XML Convert</h1>
+                                <p class="ms-page-sub">Files are not stored on the server.</p>
+                            </div>
+                            <a class="ms-btn ms-btn-secondary" href="{% url 'tmobile:convert_template_tmobile' %}" id="templateBtn">
+                                <i class="fa fa-download"></i><span>CSV Template</span>
+                            </a>
+                        </div>
+
+                        <div class="ms-grid">
+                            <form class="ms-card ms-convert-form" method="POST" enctype="multipart/form-data" novalidate>
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="csv_to_xml">
+                                <div class="ms-section">
+                                    <h2 class="ms-section-title">CSV to XML</h2>
+                                    <label for="csvFile" class="ms-label">CSV File</label>
+                                    <div class="custom-file">
+                                        <input type="file" class="custom-file-input" id="csvFile" name="file" accept=".csv" required>
+                                        <label class="custom-file-label" for="csvFile">Choose file</label>
+                                    </div>
+                                    <small class="ms-help">Template or debug CSV, max {{ max_mb }} MB</small>
+                                    <div class="ms-status" role="status" aria-live="polite"></div>
+                                </div>
+                                <div class="ms-actions">
+                                    <label class="ms-toggle" for="split">
+                                        <input type="checkbox" id="split" name="split" value="on" checked>
+                                        <span class="ms-toggle-track"><span class="ms-toggle-thumb"></span></span>
+                                        <span class="ms-toggle-text">Split by message-id</span>
+                                    </label>
+                                    <button type="submit" class="ms-btn ms-btn-primary">
+                                        <span class="ms-spinner" aria-hidden="true"></span><span class="ms-btn-text">Convert to XML</span>
+                                    </button>
+                                </div>
+                            </form>
+
+                            <form class="ms-card ms-convert-form" method="POST" enctype="multipart/form-data" novalidate>
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="xml_to_csv">
+                                <div class="ms-section">
+                                    <h2 class="ms-section-title">XML to CSV</h2>
+                                    <label for="xmlFile" class="ms-label">XML File</label>
+                                    <div class="custom-file">
+                                        <input type="file" class="custom-file-input" id="xmlFile" name="file" accept=".xml" required>
+                                        <label class="custom-file-label" for="xmlFile">Choose file</label>
+                                    </div>
+                                    <small class="ms-help">NETCONF XML, max {{ max_mb }} MB</small>
+                                    <div class="ms-status" role="status" aria-live="polite"></div>
+                                </div>
+                                <div class="ms-actions">
+                                    <span></span>
+                                    <button type="submit" class="ms-btn ms-btn-primary">
+                                        <span class="ms-spinner" aria-hidden="true"></span><span class="ms-btn-text">Convert to CSV</span>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <script>
+        (function () {
+            function fileNameFrom(response, fallback) {
+                var m = /filename="([^"]+)"/.exec(response.headers.get('Content-Disposition') || '');
+                return m ? m[1] : fallback;
+            }
+            function showStatus(form, text, ok) {
+                var box = form.querySelector('.ms-status');
+                box.textContent = text;
+                box.className = 'ms-status ' + (ok ? 'is-ok' : 'is-error');
+            }
+            document.querySelectorAll('.ms-convert-form').forEach(function (form) {
+                var btn = form.querySelector('button[type=submit]');
+                var btnText = btn.querySelector('.ms-btn-text');
+                var label = btnText.textContent;
+                form.addEventListener('submit', function (event) {
+                    event.preventDefault();
+                    var input = form.querySelector('input[type=file]');
+                    if (!input.files.length) { showStatus(form, 'Select a file', false); return; }
+                    btn.disabled = true; btn.classList.add('ms-busy'); btnText.textContent = 'Converting...';
+                    fetch(window.location.pathname, { method: 'POST', body: new FormData(form), credentials: 'same-origin' })
+                        .then(function (response) {
+                            if (response.redirected || (response.headers.get('Content-Type') || '').indexOf('text/html') === 0) {
+                                throw new Error('Session expired, reload the page and log in again');
+                            }
+                            if (!response.ok) {
+                                return response.json().catch(function () { return { error: 'Conversion failed (HTTP ' + response.status + ')' }; })
+                                    .then(function (data) { throw new Error(data.error); });
+                            }
+                            var name = fileNameFrom(response, 'output');
+                            return response.blob().then(function (blob) {
+                                var url = URL.createObjectURL(blob);
+                                var a = document.createElement('a');
+                                a.href = url; a.download = name;
+                                document.body.appendChild(a); a.click(); a.remove();
+                                setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+                                showStatus(form, 'Downloaded ' + name, true);
+                            });
+                        })
+                        .catch(function (err) { showStatus(form, err.message || 'Conversion failed', false); })
+                        .then(function () { btn.disabled = false; btn.classList.remove('ms-busy'); btnText.textContent = label; });
+                });
+            });
+        })();
+    </script>
+{% endblock %}
