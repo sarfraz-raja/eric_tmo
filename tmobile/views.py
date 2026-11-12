@@ -28,6 +28,7 @@ def script_tmobile(request):
         mname = request.POST.get('mname')
         swenm = request.POST.get('sw_enm')
         debug = request.POST.get('debug') == 'on'
+        debug_local = request.get_host().split(':')[0] in ('localhost', '127.0.0.1')
         user = User.objects.get(username=request.user.username)
         software = Software.objects.get(swname=swrel)
         client = Client.objects.get(software=software, mname=mname, enm=swenm)  # cname=cname, 
@@ -36,7 +37,7 @@ def script_tmobile(request):
         curr_dt = datetime.now().strftime('%Y%m%d%H%M%S')
         base_dir, zip_file = save_file(request, 'software_log', curr_dt, location=sites, activity='tmobile')
         base_dir, cix_file = save_file(request, 'ciqfile', curr_dt, location=sites, activity='tmobile')
-        tmobile_job(script_job_id=script_job.id, cix_file=cix_file, zip_file=zip_file, base_dir=base_dir, sites=sites, debug=debug)
+        tmobile_job(script_job_id=script_job.id, cix_file=cix_file, zip_file=zip_file, base_dir=base_dir, sites=sites, debug=debug, debug_local=debug_local)
         return HttpResponseRedirect('/T-Mobile/sitelist/')
     else:
         client_tmo = {}

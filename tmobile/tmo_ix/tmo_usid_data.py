@@ -31,7 +31,7 @@ class tmo_usid_data:
             self.sites['site_' + str(node)] = tmo_dcgk_data(node, dcgk_extract.merged_dict.get(node, {}))
         self.mom_files, self.mom_cache = dcgk_extract.mom_files, {}
         self.source_files = dcgk_extract.source_files
-        self.debug_csv = False
+        self.debug_csv, self.debug_csv_local = False, False
         self.df_ant_near_unit = pd.DataFrame()
         self.ant_system_list = []
 

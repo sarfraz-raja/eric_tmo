@@ -260,11 +260,12 @@ class C09_nr_03_gNodeBMOs(tmo_xml_base):
                 'UeGroupSelection': {
                     'id': ['1'],
                     'Chipsets': {'id': []},
-                    'ImeiSvs': {'id': ['BSW_Cond_GA', 'DCSC_Problematic_UE', 'S24_Ultra_ULCA']},
+                    'ImeiSvs': {'id': ['BSW_Cond_GA', 'DCSC_Problematic_UE', 'S24_Ultra_ULCA', 'N41_Mobility_Blocking']},
                     'ImeiSvGroups': {
                         'id': ['1'],
                         'ImeiSvGroup': {'id': ['BSW_Cond_GA', 'Google', 'Motorola', 'Others', 'S24_Ultra_ULCA',
-                                               'Samsung', 'S24_FanSE_ULCA', 'S24_Fan_ULCA', 'S24_UltraSE_ULCA']}},
+                                               'Samsung', 'S24_FanSE_ULCA', 'S24_Fan_ULCA', 'S24_UltraSE_ULCA',
+                                               'N41_Mobility_Blocking']}},
                     'PrefUeGroupSelectionProfile': {'id': []},
                     'UeAdmissionGroupDefinition': {'id': ['E911_Users', 'SA_Traffic', 'Slicing_Users',
                                                           'VoNR', 'WPS_Users', ]},
@@ -272,7 +273,7 @@ class C09_nr_03_gNodeBMOs(tmo_xml_base):
                         'id': ['14', '2', 'GalaxyA53', 'HSI', 'Pixel_6', 'Pixel_6B', 'SD_2000', 'SD_3001', 'SD_6000', 'SD_6001',
                                'SD_9000', 'SD_9001', 'SD_9002', 'VoNR', 'MotoEdge_Austin_Wingtech', 'pCellOnlyUe']
                     },
-                    'UeMobilityGroupDefinition': {'id': ['Default', 'BSW_Cond_GA', '9', 'MotoG5G2024']},
+                    'UeMobilityGroupDefinition': {'id': ['Default', 'BSW_Cond_GA', '9', 'MotoG5G2024', 'N41_Mobility_Blocking']},
                     'UeServiceGroupDefinition': {'id': ['Sercomm', 'RRCinactive_ProblemDevice']},
                 },
                 'UeMC': {

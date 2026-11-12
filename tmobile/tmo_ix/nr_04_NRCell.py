@@ -9,12 +9,12 @@ class nr_04_NRCell(tmo_xml_base):
         super().__init__(usid=usid, node=node)
         if len(self.gnbdata) == 0: return
         if len(self.df_gnb_cell.loc[self.df_gnb_cell.addcell].index) == 0: return
+        self.write_backup_script_file(script_list=self.create_mos_msg())
         try:
             self.script_list = [self.rcp_msg_capabilities()] + self.create_rpc_msg() + [self.rcp_msg_close()]
         except Exception as e:
-            self.usid.log.info(F'nr_04_NRCell {self.node}: XML not created ({e}), MOS script written in BACKUP_SCRIPT')
+            self.usid.log.info(F'nr_04_NRCell {self.node}: XML not created ({e}), MOS script available in BACKUP_SCRIPT')
             self.script_list = []
-            self.write_backup_script_file(script_list=self.create_mos_msg())
 
     def create_mos_msg(self):
         self.xml_mo_list, self.xml_set_dict = [], {}

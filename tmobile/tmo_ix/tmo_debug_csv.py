@@ -162,12 +162,17 @@ def value_file(script, source: str, dcgk_site: str) -> str:
     files = []
     if 'DCGK' in source: files.append(getattr(script.usid, 'source_files', {}).get(dcgk_site, {}).get('dcgk', 'DCGK'))
     if 'MOC' in source: files.append(F'{script.usid.client.software.swname}.xlsx > MOC sheet (DB tmobile_modetail)')
-    if not files: files.append(script.__class__.__module__.replace('.', '/') + '.py')
+    if not files: files.append(code_source(script, script.__class__.__module__.replace('.', '/') + '.py'))
     return ' | '.join(files)
 
 
-def mom_file(script) -> str:
-    return getattr(script.usid, 'source_files', {}).get(script.node, {}).get('mom', '') if get_mom(script) else ''
+def code_source(script, name: str) -> str:
+    return name if getattr(script.usid, 'debug_csv_local', False) else 'Source code'
+
+
+def mom_file(script, cls, key: str) -> str:
+    if not (cls and key in cls[1]): return ''
+    return getattr(script.usid, 'source_files', {}).get(script.node, {}).get('mom', '')
 
 
 def mom_operator(script, cls, key: str, moc: str, flags: list) -> str:
@@ -198,6 +203,7 @@ def track_mo(script, *, mo_name: str, moid: str or None, final: dict, default: d
         cls = mom_class(script, moc, script.motype)
         for key, value in final.items():
             src = source.get(key, default_source)
+            if src == script.__class__.__name__: src = code_source(script, src)
             flags, takes_effect = cls[1].get(key, ([], '')) if cls else ([], '')
             db_flat = dict(flat_value(script, key, db_values[key])) if key in db_values else {}
             dcgk_flat = dict(flat_value(script, key, dcgk[key])) if key in dcgk else {}
@@ -217,7 +223,7 @@ def track_mo(script, *, mo_name: str, moid: str or None, final: dict, default: d
                     'operator': mom_operator(script, cls, key, moc, flags), 'parameter_value': val, 'in_script': 'no' if val == '' else 'yes',
                     'source': row_src, 'source_method': 'tracked', 'value_file': value_file(script, row_src, dcgk_site or script.node),
                     'db_value': db_flat.get(para, ''), 'dcgk_value': dcgk_flat.get(para, ''), 'backupflag': bf_text(db_params.get(key, ('', None))[1]),
-                    'mom_flags': ';'.join(flags), 'takes_effect': takes_effect, 'mom_file': mom_file(script), 'remark': '; '.join(remark)})
+                    'mom_flags': ';'.join(flags), 'takes_effect': takes_effect, 'mom_file': mom_file(script, cls, key), 'remark': '; '.join(remark)})
     except Exception as e:
         script.csv_failed = True
         script.usid.log.info(F'Debug CSV tracking stopped for {script.__class__.__name__} {script.node} ({e}), CSV derived from file')
@@ -338,5 +344,5 @@ def derived_rows(script, entries: list, fmt: str) -> list:
                      'operator': operator, 'parameter_value': val, 'in_script': 'yes', 'source': source, 'source_method': 'derived (value match)',
                      'value_file': value_file(script, source if 'Script' not in source else '', script.node),
                      'db_value': db_val, 'dcgk_value': dcgk_val, 'backupflag': bf_text(db_params[key][1]) if key in db_params else '',
-                     'mom_flags': ';'.join(flags), 'takes_effect': takes_effect, 'mom_file': mom_file(script), 'remark': '; '.join(remark)})
+                     'mom_flags': ';'.join(flags), 'takes_effect': takes_effect, 'mom_file': mom_file(script, cls, key), 'remark': '; '.join(remark)})
     return rows

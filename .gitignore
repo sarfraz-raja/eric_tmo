@@ -28,3 +28,6 @@ media/
 .claude/
 Thumbs.db
 .DS_Store
+
+# Local helper scripts (not part of the tool)
+tests/
